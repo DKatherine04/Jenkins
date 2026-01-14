@@ -1,27 +1,34 @@
 pipeline {
     agent any
 
-    tools {
-        nodejs "Node22" // Configura una instalación de Node.js en Jenkins
-        dockerTool 'Dockertool'  // Cambia el nombre de la herramienta según tu configuración en Jenkins
-    }
-
     stages {
-        stage('Construir Imagen Docker') {
+
+        stage('Verificar Node y Docker') {
             steps {
-                sh 'docker build -t hola-mundo-node:latest .'
+                bat 'node -v'
+                bat 'npm -v'
+                bat 'docker --version'
             }
         }
 
-        stage('Ejecutar Contenedor Node.js') {
+        stage('Instalar dependencias') {
             steps {
-                sh '''
-                    # Detener y eliminar cualquier contenedor previo
-                    docker stop hola-mundo-node || true
-                    docker rm hola-mundo-node || true
+                bat 'npm install'
+            }
+        }
 
-                    # Ejecutar el contenedor de la aplicación
-                    docker run -d --name hola-mundo-node -p 3000:3000 hola-mundo-node:latest
+        stage('Construir imagen Docker') {
+            steps {
+                bat 'docker build -t hola-mundo-node:latest .'
+            }
+        }
+
+        stage('Ejecutar contenedor') {
+            steps {
+                bat '''
+                docker stop hola-mundo-node || exit 0
+                docker rm hola-mundo-node || exit 0
+                docker run -d --name hola-mundo-node -p 3000:3000 hola-mundo-node:latest
                 '''
             }
         }
