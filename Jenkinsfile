@@ -1,36 +1,45 @@
 pipeline {
     agent any
 
+    tools {
+        nodejs "Node22"
+        dockerTool "Dockertool" 
+    }
+
     stages {
-
-        stage('Verificar Node y Docker') {
-            steps {
-                bat 'node -v'
-                bat 'npm -v'
-                bat 'docker --version'
-            }
-        }
-
         stage('Instalar dependencias') {
             steps {
-                bat 'npm install'
+                sh 'npm install'
             }
         }
 
-        stage('Construir imagen Docker') {
+        stage('Ejecutar tests') {
             steps {
-                bat 'docker build -t hola-mundo-node:latest .'
+                sh 'npm test'
             }
         }
 
-        stage('Ejecutar contenedor') {
+        stage('Construir Imagen Docker') {
+            when {
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
             steps {
-                bat '''
-                docker stop hola-mundo-node || exit 0
-                docker rm hola-mundo-node || exit 0
-                docker run -d --name hola-mundo-node -p 3000:3000 hola-mundo-node:latest
+                sh 'docker build -t hola-mundo-node:latest .'
+            }
+        }
+
+        stage('Ejecutar Contenedor Node.js') {
+            when {
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
+            steps {
+                sh '''
+                    docker stop hola-mundo-node || true
+                    docker rm hola-mundo-node || true
+                    docker run -d --name hola-mundo-node -p 3000:3000 hola-mundo-node:latest
                 '''
             }
         }
     }
 }
+ 
