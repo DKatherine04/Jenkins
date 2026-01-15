@@ -1,6 +1,6 @@
 const request = require('supertest');
 const fs = require('fs');
-const app = require('../index');
+const app = require('./index');
  
 describe("API de usuarios", () => {
   const testUser = {
